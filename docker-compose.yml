@@ -1,0 +1,38 @@
+volumes:
+  postgres_data_duolingo:
+    driver: local
+
+networks:
+  duolingo-net:
+    name: duolingo-net
+    driver: bridge
+
+services:
+  postgres_duolingo:
+    container_name: postgres_duolingo
+    image: postgres:15
+    expose:
+      - "${POSTGRESQL_PORT}"
+    environment:
+      POSTGRES_DB: ${POSTGRESQL_DB}
+      POSTGRES_USER: ${POSTGRESQL_USER}
+      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
+    volumes:      
+      - postgres_data_duolingo:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - duolingo-net
+  pgadmin_duolingo:
+    container_name: pgadmin_duolingo
+    image: dpage/pgadmin4:8.9
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - ${PGADMIN_PORT}
+    depends_on:
+      - postgres_duolingo
+    restart: unless-stopped
+    networks:
+      - duolingo-net
+      
