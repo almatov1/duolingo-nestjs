@@ -11,3 +11,61 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id            Int           @id @default(autoincrement())
+  telegramId    BigInt        @unique
+  name          String
+  surname       String
+  nationality   String
+  workPlace     String
+  address       String
+  telephone     String
+  language      Language
+  level         Level?
+  format        StudyFormat?
+  updatedAt     DateTime?     @updatedAt  @db.Timestamptz(6)
+  createdAt     DateTime      @default(now()) @db.Timestamptz(6)
+
+  @@map("users")
+}
+
+model UserProgress {
+  id          Int            @id @default(autoincrement())
+  userId      Int
+  topicId     Int
+  lessonType  LessonType
+  content     String?
+  updatedAt   DateTime?     @updatedAt  @db.Timestamptz(6)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+
+  @@unique([userId, topicId, lessonType])
+  @@map("user_progress")
+}
+
+enum Language {
+  kk
+  ru
+  en
+}
+
+enum Level {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+enum StudyFormat {
+  OFFLINE
+  ONLINE
+}
+
+enum LessonType {
+  WRITING
+  READING
+  LISTENING
+  SPEAKING
+}
