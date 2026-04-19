@@ -16,7 +16,7 @@ model User {
   id            Int           @id @default(autoincrement())
   telegramId    BigInt        @unique
   name          String
-  surname       String
+  birthday      String
   nationality   String
   workPlace     String
   address       String
@@ -55,7 +55,6 @@ enum Level {
   B1
   B2
   C1
-  C2
 }
 
 enum StudyFormat {
