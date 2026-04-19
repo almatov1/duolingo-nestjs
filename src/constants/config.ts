@@ -1,4 +1,4 @@
-import { StudyFormat } from "generated/prisma/enums";
+import { StudyFormat } from "@prisma/client";
 
 // PAGINATION
 export const PER_PAGE = { COUNT_30: 30, COUNT_100: 100 };

@@ -1,4 +1,4 @@
-import { LessonType, Level } from "generated/prisma/enums";
+import { LessonType, Level } from "@prisma/client";
 
 export const LEVELS = [
     {

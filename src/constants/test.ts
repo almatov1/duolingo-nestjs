@@ -1,4 +1,4 @@
-import { Level } from "generated/prisma/enums";
+import { Level } from "@prisma/client";
 
 export const TEST_QUESTIONS = [
     {
