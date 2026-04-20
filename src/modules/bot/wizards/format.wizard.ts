@@ -1,4 +1,4 @@
-import { StudyFormat } from '@prisma/client';
+import { StudyFormat, User } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { Wizard, WizardStep, Context, On } from 'nestjs-telegraf';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,15 +15,14 @@ export class FormatWizard {
 
     @WizardStep(1)
     async step1(@Context() ctx: Scenes.WizardContext) {
-        const state = ctx.wizard.state as any;
-        state.lang = ctx.state.user?.language || 'kk';
+        const user = (ctx.session as any).user as User;
 
-        await ctx.reply(this.i18n.t('format.start', { lang: state.lang }), {
+        await ctx.reply(this.i18n.t('format.start', { lang: user.language }), {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: this.i18n.t('format.online', { lang: state.lang }), callback_data: StudyFormat.ONLINE },
-                        { text: this.i18n.t('format.offline', { lang: state.lang }), callback_data: StudyFormat.OFFLINE }
+                        { text: this.i18n.t('format.online', { lang: user.language }), callback_data: StudyFormat.ONLINE },
+                        { text: this.i18n.t('format.offline', { lang: user.language }), callback_data: StudyFormat.OFFLINE }
                     ]
                 ],
             },
@@ -34,6 +33,7 @@ export class FormatWizard {
     @On('callback_query')
     @WizardStep(2)
     async handleAnswer(@Context() ctx: Scenes.WizardContext & { update: any }) {
+        const user = (ctx.session as any).user as User;
         const callbackData = ctx.update.callback_query.data;
 
         await this.prisma.user.update({
@@ -41,7 +41,9 @@ export class FormatWizard {
             data: { format: callbackData }
         });
 
-        await ctx.scene.leave();
-        return this.menuService.showMainMenu(ctx);
+        await ctx.answerCbQuery();
+        if (callbackData === StudyFormat.OFFLINE) await ctx.reply(this.i18n.t('format.location', { lang: user.language }));
+        else await this.menuService.showMainMenu(ctx);
+        return ctx.scene.leave();
     }
 }

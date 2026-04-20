@@ -12,6 +12,6 @@ import { MenuService } from './menu.service';
         TestWizard,
         FormatWizard,
         MenuService
-    ],
+    ]
 })
 export class BotModule { }

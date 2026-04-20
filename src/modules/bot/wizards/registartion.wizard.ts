@@ -83,13 +83,12 @@ export class RegistrationWizard {
     async step8(@Context() ctx: Scenes.WizardContext) {
         const state = ctx.wizard.state as RegistrationInterface;
         state.telephone = (ctx.message as any).text;
-        const createdUser = await this.prisma.user.create({
+        await this.prisma.user.create({
             data: {
                 telegramId: ctx.from?.id!,
                 ...state as any
             }
         });
-        (ctx as any).state.user = createdUser;
         return ctx.scene.enter('test-wizard');
     }
 }

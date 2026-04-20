@@ -1,6 +1,8 @@
 volumes:
   postgres_data_duolingo:
     driver: local
+  redis_data_duolingo:
+    driver: local
 
 networks:
   duolingo-net:
@@ -32,6 +34,17 @@ services:
       - ${PGADMIN_PORT}
     depends_on:
       - postgres_duolingo
+    restart: unless-stopped
+    networks:
+      - duolingo-net
+  redis_duolingo:
+    container_name: redis_duolingo
+    image: redis:7
+    command: redis-server --appendonly yes
+    expose:
+      - "${REDIS_PORT}"
+    volumes:
+      - redis_data_duolingo:/data
     restart: unless-stopped
     networks:
       - duolingo-net

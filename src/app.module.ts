@@ -8,6 +8,7 @@ import * as path from 'path';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
 import { TelegrafI18nModule } from 'nestjs-telegraf-i18n';
+import { Redis } from '@telegraf/session/redis';
 
 @Module({
   imports: [
@@ -26,9 +27,23 @@ import { TelegrafI18nModule } from 'nestjs-telegraf-i18n';
       resolvers: []
     }),
     TelegrafI18nModule,
-    TelegrafModule.forRoot({
-      token: process.env.TELEGRAM_TOKEN!,
-      middlewares: [session()]
+    TelegrafModule.forRootAsync({
+      useFactory: () => {
+        const store = Redis({
+          url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+        });
+
+        return {
+          token: process.env.TELEGRAM_TOKEN!,
+          middlewares: [
+            session({ store }),
+            (ctx, next) => {
+              if (ctx && !ctx.session) ctx.session = {};
+              return next();
+            },
+          ]
+        }
+      }
     }),
     BotModule
   ]

@@ -1,3 +1,4 @@
+import { User } from '@prisma/client';
 import { I18nService } from 'nestjs-i18n';
 import { Wizard, WizardStep, Context, On } from 'nestjs-telegraf';
 import { TEST_QUESTIONS, TEST_RESULT } from 'src/constants/test';
@@ -14,11 +15,11 @@ export class TestWizard {
     @WizardStep(1)
     async startTest(@Context() ctx: Scenes.WizardContext) {
         const state = ctx.wizard.state as any;
-        state.lang = ctx.state.user?.language || 'kk';
+        const user = (ctx.session as any).user as User;
         state.currentIdx = 0;
         state.score = 0;
 
-        await ctx.reply(this.i18n.t('test.start', { lang: state.lang }));
+        await ctx.reply(this.i18n.t('test.start', { lang: user.language }));
 
         const msg = await this.sendQuestion(ctx, true) as any;
         state.messageId = msg.message_id;
@@ -30,6 +31,7 @@ export class TestWizard {
     @WizardStep(2)
     async handleAnswer(@Context() ctx: Scenes.WizardContext & { update: any }) {
         const state = ctx.wizard.state as any;
+        const user = (ctx.session as any).user as User;
         const callbackData = ctx.update.callback_query.data;
 
         const [questionIdx, answerIdx] = callbackData.split('-').map(Number);
@@ -49,14 +51,14 @@ export class TestWizard {
 
             const resultLevel = TEST_RESULT.findLast(t => t.correctCount <= state.score);
             const levelKey = resultLevel?.level!;
-            const levelName = this.i18n.t(`test.${levelKey}`, { lang: state.lang });
+            const levelName = this.i18n.t(`test.${levelKey}`, { lang: user.language });
 
             await ctx.reply(this.i18n.t('test.result', {
-                lang: state.lang,
+                lang: user.language,
                 args: { level: levelKey, levelName: levelName }
             }));
 
-            this.prisma.user.update({
+            await this.prisma.user.update({
                 where: { telegramId: BigInt(ctx.from!.id) },
                 data: { level: levelKey }
             });

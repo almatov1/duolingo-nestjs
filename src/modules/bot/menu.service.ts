@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
+import { User } from "@prisma/client";
 import { I18nService } from "nestjs-i18n";
-import { Markup } from "telegraf";
+import { LEVELS } from "src/constants/curriculum";
+import { Markup, Scenes } from "telegraf";
 
 @Injectable()
 export class MenuService {
@@ -8,13 +10,12 @@ export class MenuService {
         private readonly i18n: I18nService
     ) { }
 
-    async showMainMenu(ctx: any) {
-        const lang = ctx.state.user?.language || 'kk';
-        await ctx.reply(this.i18n.t('menu.welcome', { lang }),
-            Markup.keyboard([
-                [this.i18n.t('menu.lessons', { lang }), this.i18n.t('menu.profile', { lang })],
-                [this.i18n.t('menu.support', { lang })]
-            ]).resize()
-        );
+    async showMainMenu(ctx: Scenes.WizardContext | Scenes.SceneContext) {
+        const user = (ctx.session as any).user as User;
+
+        const buttons = LEVELS.find(l => l.label === user.level)?.topics.map(topic => ([
+            Markup.button.callback(`📖 ${this.i18n.t(`topics.${topic.id}`, { lang: user.language })}`, `view_lesson:${topic.id}`)
+        ])) ?? [];
+        await ctx.reply(this.i18n.t('topics.start', { lang: user.language }), Markup.inlineKeyboard(buttons));
     }
 }

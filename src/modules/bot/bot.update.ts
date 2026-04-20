@@ -1,23 +1,42 @@
-import { UseGuards } from '@nestjs/common';
 import { Context, Start, Update } from 'nestjs-telegraf';
-import { BotGuard } from 'src/guards/bot.guard';
-import { Scenes } from 'telegraf';
 import { MenuService } from './menu.service';
-
+import { I18nService } from 'nestjs-i18n';
+import { StudyFormat, User } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { Scenes } from 'telegraf';
 @Update()
-@UseGuards(BotGuard)
 export class BotUpdate {
     constructor(
-        private readonly menuService: MenuService
+        private readonly menuService: MenuService,
+        private readonly i18n: I18nService,
+        private readonly prisma: PrismaService
     ) { }
 
     @Start()
-    async onStart(@Context() ctx: Scenes.SceneContext) {
-        const user = ctx.state.user;
+    async onStart(@Context() ctx: Scenes.SceneContext & {
+        session: {
+            user?: User | null;
+        };
+    }) {
+        const telegramId = ctx.from?.id;
+        if (telegramId) {
+            if (!ctx.session.user) {
+                const user = await this.prisma.user.findUnique({
+                    where: { telegramId: BigInt(telegramId) },
+                });
+                ctx.session.user = user ?? null;
+            }
+        }
 
-        if (!user) return ctx.scene.enter('registration-wizard');
-        if (!user.level) return ctx.scene.enter('test-wizard');
-        if (!user.format) return ctx.scene.enter('format-wizard');
-        return this.menuService.showMainMenu(ctx);
+        if (!ctx.session.user) return ctx.scene.enter('registration-wizard');
+        if (!ctx.session.user.level) return ctx.scene.enter('test-wizard');
+        if (!ctx.session.user.format) return ctx.scene.enter('format-wizard');
+        if (ctx.session.user.format === StudyFormat.OFFLINE) {
+            await ctx.reply(this.i18n.t('format.location', { lang: ctx.session.user.language }));
+            return;
+        }
+
+        await this.menuService.showMainMenu(ctx);
+        return;
     }
 }
