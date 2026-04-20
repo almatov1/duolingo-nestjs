@@ -1,23 +1,26 @@
-import { Wizard, WizardStep, Context, Message, On } from 'nestjs-telegraf';
+import { Wizard, WizardStep, Context, On } from 'nestjs-telegraf';
 import { Scenes } from 'telegraf';
 import { RegistrationInterface } from '../interfaces/registration.interface';
 import { I18nService } from 'nestjs-i18n';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { Language } from '@prisma/client';
 
 @Wizard('registration-wizard')
 export class RegistrationWizard {
     constructor(
+        private readonly prisma: PrismaService,
         private readonly i18n: I18nService
     ) { }
 
     @WizardStep(1)
     async step1(@Context() ctx: Scenes.WizardContext) {
-        await ctx.reply('Ақтөбе облысының Тілдерді дамыту басқармасы ММ-нің «Тілдерді оқыту орталығы» КММ әзірлеген тіл үйрену ботына қош келдіңіз!\n\nҚызметті бастау үшін өзіңізге ыңғайлы тілді таңдаңыз:', {
+        await ctx.reply('👋 Ақтөбе облысының Тілдерді дамыту басқармасы ММ-нің «Тілдерді оқыту орталығы» КММ әзірлеген тіл үйрену ботына қош келдіңіз!\n\nҚызметті бастау үшін өзіңізге ыңғайлы тілді таңдаңыз:', {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: '🇰🇿 Қазақ тілі', callback_data: 'kk' },
-                        { text: '🇷🇺 Русский язык', callback_data: 'ru' },
-                        { text: '🇺🇸 English', callback_data: 'en' }
+                        { text: '🇰🇿 Қазақ тілі', callback_data: Language.kk },
+                        { text: '🇷🇺 Русский язык', callback_data: Language.ru },
+                        { text: '🇺🇸 English', callback_data: Language.en }
                     ]
                 ],
             },
@@ -31,7 +34,7 @@ export class RegistrationWizard {
         const state = ctx.wizard.state as RegistrationInterface;
         state.language = ctx.update.callback_query.data ?? 'kk';
         await ctx.answerCbQuery();
-        await ctx.reply(this.i18n.t('registration.ask_name', { lang: state.language }));
+        await ctx.reply(`${this.i18n.t('registration.start', { lang: state.language })}\n\n${this.i18n.t('registration.ask_name', { lang: state.language })}`);
         ctx.wizard.next();
     }
 
@@ -79,9 +82,14 @@ export class RegistrationWizard {
     @WizardStep(8)
     async step8(@Context() ctx: Scenes.WizardContext) {
         const state = ctx.wizard.state as RegistrationInterface;
-        state.phone = (ctx.message as any).text;
-        console.log('Данные регистрации:', state);
-        await ctx.reply(`Регистрация завершена!\n\nHello, ${state.name}!`);
-        return ctx.scene.leave();
+        state.telephone = (ctx.message as any).text;
+        const createdUser = await this.prisma.user.create({
+            data: {
+                telegramId: ctx.from?.id!,
+                ...state as any
+            }
+        });
+        (ctx as any).state.user = createdUser;
+        return ctx.scene.enter('test-wizard');
     }
 }

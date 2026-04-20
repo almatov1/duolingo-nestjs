@@ -14,12 +14,12 @@ datasource db {
 model User {
   id            Int           @id @default(autoincrement())
   telegramId    BigInt        @unique
-  name          String?
-  birthday      String?
-  nationality   String?
-  workplace     String?
-  address       String?
-  telephone     String?
+  name          String
+  birthday      String
+  nationality   String
+  workplace     String
+  address       String
+  telephone     String
   language      Language
   level         Level?
   format        StudyFormat?

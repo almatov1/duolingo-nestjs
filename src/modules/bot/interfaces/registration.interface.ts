@@ -1,9 +1,11 @@
+import { Language } from "@prisma/client";
+
 export interface RegistrationInterface {
-    language?: string;
+    language?: Language;
     name?: string;
     birthday?: string;
     nationality?: string;
     workplace?: string;
     address?: string;
-    phone?: string;
+    telephone?: string;
 }
