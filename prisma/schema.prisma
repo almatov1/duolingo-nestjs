@@ -17,7 +17,7 @@ model User {
   name          String?
   birthday      String?
   nationality   String?
-  workPlace     String?
+  workplace     String?
   address       String?
   telephone     String?
   language      Language
